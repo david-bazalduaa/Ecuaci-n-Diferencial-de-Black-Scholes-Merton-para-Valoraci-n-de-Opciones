@@ -3,7 +3,17 @@
 
 ## Contenido del Proyecto
 
-El proyecto se estructura en seis fases principales, cada una abordando una perspectiva distinta para el estudio y resolución de la ecuación de Black-Scholes-Merton:
+Se trabajará a partir de la ecuación diferencial parcial de Black-Scholes-Merton, que describe el precio de una opción financiera \( V(S, t) \) en función del precio del activo subyacente \( S \) y del tiempo \( t \):
+
+\[
+\frac{\partial V}{\partial t} + \frac{1}{2} \sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} + rS \frac{\partial V}{\partial S} - rV = 0
+\]
+
+donde:
+- \( S(t) \): precio del activo subyacente
+- \( V(S,t) \): valor de la opción
+- \( \sigma \): volatilidad
+- \( r \): tasa libre de riesgo
 
 ### Fase 1: Cambio de variable
 - Transformación de la ecuación original mediante el cambio de variable `x = ln(S)`.
