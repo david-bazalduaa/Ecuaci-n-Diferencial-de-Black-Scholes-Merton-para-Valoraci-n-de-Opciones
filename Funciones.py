@@ -23,7 +23,7 @@ def valor_put(ST, K, T, r):
 
 
 def binaria_montecarlo(ST, K, T, r):
-    payoff = (ST < K).astype(float)
+    payoff = (ST < K).astype(int)
     return np.exp(-r * T) * np.mean(payoff)
 
 def black_scholes_put(S0, K, T, r, sigma):
