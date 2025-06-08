@@ -29,5 +29,5 @@ def binaria_montecarlo(ST, K, T, r):
 def black_scholes_put(S0, K, T, r, sigma):
     d1 = (np.log(S0 / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
     d2 = d1 - sigma * np.sqrt(T)
-    return K * np.exp(-r * T) * norm.cdf(-d2) - S0 * norm.cdf(-d1)
+    return -K * np.exp(-r * T) * norm.cdf(d2) + S0 * norm.cdf(d1)
     
