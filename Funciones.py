@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.stats import norm
+import matplotlib.pyplot as plt
 
 def simulate_gbm(S0, mu, sigma, T, N, n_paths):
     dt = T / N
@@ -137,5 +138,13 @@ def calcular_errores(S0, K, r, sigma, T, valoresMN,S_max,tipo='put'):
         
         error = abs(referencia - V)
         errores.append((M, N, V, referencia, error))
+    
+    #plt.figure()
+    #plt.loglog(valoresMN[0], [tupla[-1] for tupla in errores], marker='o')
+    #plt.xlabel("Número de subdivisiones M (=N)")
+    #plt.ylabel("Error absoluto")
+    #plt.title("Error absoluto vs tamaño de malla (log-log)")
+    #plt.grid(True)
+    #plt.show()
     
     return errores
