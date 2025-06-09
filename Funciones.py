@@ -1,7 +1,5 @@
 import numpy as np
 from scipy.stats import norm
-from scipy.sparse.linalg import spsolve
-from scipy.sparse import diags
 
 def simulate_gbm(S0, mu, sigma, T, N, n_paths):
     dt = T / N
