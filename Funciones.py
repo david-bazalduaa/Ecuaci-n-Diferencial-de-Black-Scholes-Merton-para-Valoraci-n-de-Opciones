@@ -1,44 +1,57 @@
+#Importo las librerias
 import numpy as np
 from scipy.stats import norm
 import matplotlib.pyplot as plt
 
+# Definición de funciones para simulación de Monte Carlo y Black-Scholes
+
+#Función para simular un movimiento browniano geométrico (GBM)
 def simulate_gbm(S0, mu, sigma, T, N, n_paths):
     dt = T / N
+    # t es el vector de tiempos, paths es la matriz de trayectorias
     t = np.linspace(0, T, N + 1)
     paths = np.zeros((n_paths, N + 1))
     paths[:, 0] = S0
-    
+    np.random.seed(42)  #Para reproducibilidad
+    # Generar incrementos del proceso de Wiener
+    # dW es el incremento del proceso de Wiener
     dW = np.random.randn(n_paths, N) * np.sqrt(dt)
 
+    # Calcular las trayectorias del GBM
     for i in range(n_paths):
         W = np.cumsum(dW[i])
         paths[i, 1:] = S0 * np.exp((mu - 0.5 * sigma ** 2) * t[1:] + sigma * W)
 
+    # Retornar el vector de tiempos y la matriz de trayectorias
     return t, paths
 
-
+#Función para calcular el valor de una opción put europea usando Monte Carlo
 def valor_put(ST, K, T, r):
     payoff = np.maximum(K - ST, 0)
     return np.exp(-r * T) * np.mean(payoff)
 
-
+#Función para calcular el valor de una opción binaria put europea usando Monte Carlo
 def binaria_montecarlo(ST, K, T, r):
     payoff = (ST < K).astype(int)
     return np.exp(-r * T) * np.mean(payoff)
 
+#Función para calcular el valor de una opción put europea usando Black-Scholes
 def black_scholes_put(S0, K, T, r, sigma):
     d1 = (np.log(S0 / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
     d2 = d1 - sigma * np.sqrt(T)
-    return -K * np.exp(-r * T) * norm.cdf(d2) + S0 * norm.cdf(d1)
+    return K * np.exp(-r * T) * norm.cdf(-d2) - S0 * norm.cdf(-d1)
 
+#Función para calcular el valor de una opción binaria put europea usando Black-Scholes
 def binaria_black_scholes(S0, K, T, r, sigma):
     d2 = (np.log(S0 / K) + (r - 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
     binario_put = np.exp(-r * T) * norm.cdf(-d2)
     return binario_put
 
+#Función para inicializar la malla de precios y tiempos
 def inicializar_malla(M, K,S_max, tipo='put'):
     V=np.zeros(M+1)  # Malla de precios y tiempos
     dS = S_max / M  # Tamaño del paso en la malla de precios
+    # Inicializar los valores de la malla según el tipo de opción
     for i in range(M+1):
         Si = i * dS
         if tipo == 'put':
@@ -47,6 +60,8 @@ def inicializar_malla(M, K,S_max, tipo='put'):
             V[i] = 1 if Si < K else 0
     return V
 
+
+#Función para crear la matriz tridiagonal para el método implícito
 def crear_matriz_tridiagonal(M, dS, dT, sigma, r):
     A = np.zeros((M-1, M-1))
 
@@ -64,6 +79,7 @@ def crear_matriz_tridiagonal(M, dS, dT, sigma, r):
     return A
     
 
+#Función para resolver un sistema tridiagonal 
 def sol_tridiagonal(A, b):
     n= len(b)
     cp= np.zeros(n)
@@ -87,7 +103,7 @@ def sol_tridiagonal(A, b):
 
     return x
 
-
+#Función para resolver el sistema implícito para opciones europeas usando el método implícito
 def solucion_implicita(dT,A,V,K,r,dS,S0,T,N,tipo='put'):
     for j in range(N-1, 0, -1):
         t = j * dT
@@ -115,7 +131,7 @@ def solucion_implicita(dT,A,V,K,r,dS,S0,T,N,tipo='put'):
     return V_interp
 
 
-
+#Función para calcular errores entre el valor de referencia y el valor calculado por el método implícito
 def calcular_errores(S0, K, r, sigma, T, valoresMN,S_max,tipo='put'):
     referencia=black_scholes_put(S0, K, T, r, sigma) if tipo == 'put' else binaria_black_scholes(S0, K, T, r, sigma)
     errores = []
@@ -138,13 +154,17 @@ def calcular_errores(S0, K, r, sigma, T, valoresMN,S_max,tipo='put'):
         
         error = abs(referencia - V)
         errores.append((M, N, V, referencia, error))
+
+    # Obtener listas separadas para M y errores
+    M_vals = [M for M, _, _, _, _ in errores]
+    error_vals = [err for _, _, _, _, err in errores]
     
-    #plt.figure()
-    #plt.loglog(valoresMN[0], [tupla[-1] for tupla in errores], marker='o')
-    #plt.xlabel("Número de subdivisiones M (=N)")
-    #plt.ylabel("Error absoluto")
-    #plt.title("Error absoluto vs tamaño de malla (log-log)")
-    #plt.grid(True)
-    #plt.show()
+    plt.figure(figsize=(10, 6))
+    plt.plot(M_vals, error_vals, marker='o')
+    plt.xlabel("Número de subdivisiones M (=N)")
+    plt.ylabel("Error absoluto")
+    plt.title("Error absoluto vs tamaño de malla")
+    plt.grid(True, which='both')
+    plt.show()
     
     return errores
