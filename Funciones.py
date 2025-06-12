@@ -168,3 +168,60 @@ def calcular_errores(S0, K, r, sigma, T, valoresMN,S_max,tipo='put'):
     plt.show()
     
     return errores
+
+
+#Función para comparar la solución implícita con Monte Carlo
+def comparar_soluciones(S0, K, r, sigma, T, valoresMN, S_max,M,N, n_paths=1000000, tipo='put'):
+    print(f"\nComparación entre Método Implícito y Monte Carlo")
+    print(f"Parámetros: S0={S0}, K={K}, r={r}, σ={sigma}, T={T}, M=N={M}, paths={n_paths}")
+
+    # Valor Black-Scholes como referencia
+    if tipo == 'put':
+        valor_bs = black_scholes_put(S0, K, T, r, sigma)
+    else:
+        valor_bs = binaria_black_scholes(S0, K, T, r, sigma)
+
+    # Simulación de trayectorias Monte Carlo
+    _, paths = simulate_gbm(S0, r, sigma, T, N, n_paths)
+    ST = paths[:, -1]  # Valor del activo al tiempo T
+
+    # Monte Carlo
+    if tipo == 'put':
+        valor_mc = valor_put(ST, K, T, r)
+    elif tipo == 'binario':
+        valor_mc = binaria_montecarlo(ST, K, T, r)
+
+    dS=S_max/M  # Tamaño del paso en la malla de precios
+    dT = T/N  # Tamaño del paso en la malla de tiempo
+    V= inicializar_malla(M, K, S_max, tipo)
+    #Añadimos las condiciones de frontera
+    if tipo == 'put':
+        V[0]=K*np.exp(-r*T)  # Condición de frontera inferior para PUT
+        V[-1] = 0  # Condición de frontera superior para PUT
+
+    elif tipo == 'binario':
+        V[0]=np.exp(-r*T)  # Condición de frontera inferior para binario
+        V[-1] = 0  # Condición de frontera superior para binario
+
+    #Matriz tridiagonal
+    A = crear_matriz_tridiagonal(M, dS, dT, sigma, r) 
+    V = solucion_implicita(dT,A,V,K,r,dS,S0,T,N,tipo=tipo)
+
+    print(f"\n tipo de opción: {tipo}")
+    print(f"Black-Scholes: {valor_bs:.6f}")
+    print(f"Monte Carlo: {valor_mc:.6f}")
+    print(f"Método Implícito: {V:.6f}")
+    print(f"Error absoluto: {abs(valor_mc - V):.6f}")
+
+    # Gráfico comparativo
+    etiquetas = ['Black-Scholes', 'Monte Carlo', 'Implícito']
+    valores = [valor_bs, valor_mc, V]
+
+    plt.figure(figsize=(8, 5))
+    plt.bar(etiquetas, valores, color=['skyblue', 'orange', 'green'])
+    plt.title(f"Comparación de métodos para opción {tipo}")
+    plt.ylabel("Valor de la opción")
+    plt.grid(axis='y')
+    plt.show()
+
+    return valor_bs, valor_mc, V
